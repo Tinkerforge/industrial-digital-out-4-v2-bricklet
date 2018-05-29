@@ -61,13 +61,12 @@ void communication_init(void);
 #define FID_SET_VALUE 1
 #define FID_GET_VALUE 2
 #define FID_SET_SELECTED_VALUE 3
-#define FID_GET_SELECTED_VALUE 4
-#define FID_SET_MONOFLOP 5
-#define FID_GET_MONOFLOP 6
-#define FID_SET_CHANNEL_LED_CONFIG 8
-#define FID_GET_CHANNEL_LED_CONFIG 9
+#define FID_SET_MONOFLOP 4
+#define FID_GET_MONOFLOP 5
+#define FID_SET_CHANNEL_LED_CONFIG 7
+#define FID_GET_CHANNEL_LED_CONFIG 8
 
-#define FID_CALLBACK_MONOFLOP_DONE 7
+#define FID_CALLBACK_MONOFLOP_DONE 6
 
 typedef struct {
 	TFPMessageHeader header;
@@ -88,16 +87,6 @@ typedef struct {
 	uint8_t channel;
 	bool value;
 } __attribute__((__packed__)) SetSelectedValue;
-
-typedef struct {
-	TFPMessageHeader header;
-	uint8_t channel;
-} __attribute__((__packed__)) GetSelectedValue;
-
-typedef struct {
-	TFPMessageHeader header;
-	bool value;
-} __attribute__((__packed__)) GetSelectedValue_Response;
 
 typedef struct {
 	TFPMessageHeader header;
@@ -144,7 +133,6 @@ typedef struct {
 BootloaderHandleMessageResponse set_value(const SetValue *data);
 BootloaderHandleMessageResponse get_value(const GetValue *data, GetValue_Response *response);
 BootloaderHandleMessageResponse set_selected_value(const SetSelectedValue *data);
-BootloaderHandleMessageResponse get_selected_value(const GetSelectedValue *data, GetSelectedValue_Response *response);
 BootloaderHandleMessageResponse set_monoflop(const SetMonoflop *data);
 BootloaderHandleMessageResponse get_monoflop(const GetMonoflop *data, GetMonoflop_Response *response);
 BootloaderHandleMessageResponse set_channel_led_config(const SetChannelLEDConfig *data);

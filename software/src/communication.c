@@ -32,7 +32,6 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_SET_VALUE: return set_value(message);
 		case FID_GET_VALUE: return get_value(message, response);
 		case FID_SET_SELECTED_VALUE: return set_selected_value(message);
-		case FID_GET_SELECTED_VALUE: return get_selected_value(message, response);
 		case FID_SET_MONOFLOP: return set_monoflop(message);
 		case FID_GET_MONOFLOP: return get_monoflop(message, response);
 		case FID_SET_CHANNEL_LED_CONFIG: return set_channel_led_config(message);
@@ -97,20 +96,6 @@ BootloaderHandleMessageResponse set_selected_value(const SetSelectedValue *data)
 	}
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
-}
-
-BootloaderHandleMessageResponse get_selected_value(const GetSelectedValue *data, GetSelectedValue_Response *response) {
-	logd("[+] IDO4-V2: get_selected_value()\n\r");
-
-	response->header.length = sizeof(GetSelectedValue_Response);
-
-	if(data->channel > NUMBER_OF_CHANNELS - 1) {
-		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
-	}
-
-	response->value = ido4.channels[data->channel].value;
-
-	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
 BootloaderHandleMessageResponse set_monoflop(const SetMonoflop *data) {
