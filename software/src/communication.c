@@ -1,5 +1,6 @@
 /* industrial-digital-out-4-v2-bricklet
  * Copyright (C) 2018 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
+ * Copyright (C) 2018 Olaf Lüke <olaf@tinkerforge.com>
  *
  * communication.c: TFP protocol message handling
  *
@@ -36,6 +37,8 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_GET_MONOFLOP: return get_monoflop(message, response);
 		case FID_SET_CHANNEL_LED_CONFIG: return set_channel_led_config(message);
 		case FID_GET_CHANNEL_LED_CONFIG: return get_channel_led_config(message, response);
+		case FID_SET_PWM_CONFIGURATION: return set_pwm_configuration(message);
+		case FID_GET_PWM_CONFIGURATION: return get_pwm_configuration(message, response);
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
 }
@@ -84,6 +87,9 @@ BootloaderHandleMessageResponse set_selected_value(const SetSelectedValue *data)
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
 
+	// Reset PWM
+	ido4_pwm_stop(data->channel);
+
 	ido4.channels[data->channel].value = data->value;
 
 	if(ido4.channels[data->channel].value) {
@@ -104,6 +110,9 @@ BootloaderHandleMessageResponse set_monoflop(const SetMonoflop *data) {
 	if(data->channel > NUMBER_OF_CHANNELS - 1) {
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
+
+	// Reset PWM
+	ido4_pwm_stop(data->channel);
 
 	ido4.channels[data->channel].value = data->value;
 	ido4.channels[data->channel].monoflop.time = data->time;
@@ -157,6 +166,33 @@ BootloaderHandleMessageResponse get_channel_led_config(const GetChannelLEDConfig
 	}
 
 	response->config = ido4.channels[data->led].status_led.config;
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse set_pwm_configuration(const SetPWMConfiguration *data) {
+	if(data->channel >= NUMBER_OF_CHANNELS) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
+
+	// Reset monoflop
+	ido4.channels[data->channel].monoflop.time = 0;
+	ido4.channels[data->channel].monoflop.time_start = 0;
+	ido4.channels[data->channel].monoflop.time_remaining = 0;
+
+	ido4_pwm_update(data->channel, data->frequency, data->duty_cycle);
+
+	return HANDLE_MESSAGE_RESPONSE_EMPTY;
+}
+
+BootloaderHandleMessageResponse get_pwm_configuration(const GetPWMConfiguration *data, GetPWMConfiguration_Response *response) {
+	if(data->channel >= NUMBER_OF_CHANNELS) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
+
+	response->header.length = sizeof(GetPWMConfiguration_Response);
+	response->duty_cycle    = ido4.channels[data->channel].pwm.duty_cycle;
+	response->frequency     = ido4.channels[data->channel].pwm.frequency;
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }

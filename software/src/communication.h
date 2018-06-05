@@ -1,5 +1,6 @@
 /* industrial-digital-out-4-v2-bricklet
  * Copyright (C) 2018 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
+ * Copyright (C) 2018 Olaf Lüke <olaf@tinkerforge.com>
  *
  * communication.h: TFP protocol message handling
  *
@@ -65,6 +66,8 @@ void communication_init(void);
 #define FID_GET_MONOFLOP 5
 #define FID_SET_CHANNEL_LED_CONFIG 7
 #define FID_GET_CHANNEL_LED_CONFIG 8
+#define FID_SET_PWM_CONFIGURATION 9
+#define FID_GET_PWM_CONFIGURATION 10
 
 #define FID_CALLBACK_MONOFLOP_DONE 6
 
@@ -129,6 +132,24 @@ typedef struct {
 	uint8_t config;
 } __attribute__((__packed__)) GetChannelLEDConfig_Response;
 
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t channel;
+	uint32_t frequency;
+	uint16_t duty_cycle;
+} __attribute__((__packed__)) SetPWMConfiguration;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t channel;
+} __attribute__((__packed__)) GetPWMConfiguration;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint32_t frequency;
+	uint16_t duty_cycle;
+} __attribute__((__packed__)) GetPWMConfiguration_Response;
+
 // Function prototypes
 BootloaderHandleMessageResponse set_value(const SetValue *data);
 BootloaderHandleMessageResponse get_value(const GetValue *data, GetValue_Response *response);
@@ -137,6 +158,8 @@ BootloaderHandleMessageResponse set_monoflop(const SetMonoflop *data);
 BootloaderHandleMessageResponse get_monoflop(const GetMonoflop *data, GetMonoflop_Response *response);
 BootloaderHandleMessageResponse set_channel_led_config(const SetChannelLEDConfig *data);
 BootloaderHandleMessageResponse get_channel_led_config(const GetChannelLEDConfig *data, GetChannelLEDConfig_Response *response);
+BootloaderHandleMessageResponse set_pwm_configuration(const SetPWMConfiguration *data);
+BootloaderHandleMessageResponse get_pwm_configuration(const GetPWMConfiguration *data, GetPWMConfiguration_Response *response);
 
 // Callbacks
 bool handle_monoflop_done_callback(void);
