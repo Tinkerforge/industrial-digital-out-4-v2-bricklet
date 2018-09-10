@@ -1,0 +1,31 @@
+Notebook[{
+ Cell[
+  BoxData[{
+   RowBox[{"Needs", "[", "\"\<NETLink`\>\"", "]"}],
+   RowBox[{"LoadNETAssembly", "[", RowBox[{"\"\<Tinkerforge\>\"", ",", RowBox[{RowBox[{"NotebookDirectory", "[", "]"}], "<>", "\"\<../../..\>\""}]}], "]"}]
+  }], "Input"
+ ],
+ Cell[
+  BoxData[{
+   RowBox[{"host", "=", "\"\<localhost\>\""}],
+   RowBox[{"port", "=", "4223"}],
+   RowBox[{"uid", "=", "\"\<XYZ\>\"", RowBox[{"(*", "Change XYZ to the UID of your Industrial Digital Out 4 Bricklet 2.0", "*)"}]}],
+   RowBox[{"
+"}],
+   RowBox[{"(*", "Create IPConnection and device object", "*)"}],
+   RowBox[{"ipcon", "=", RowBox[{"NETNew", "[", "\"\<Tinkerforge.IPConnection\>\"", "]"}]}],
+   RowBox[{"ido4", "=", RowBox[{"NETNew", "[", RowBox[{"\"\<Tinkerforge.BrickletIndustrialDigitalOut4V2\>\"", ",", "uid", ",", "ipcon"}], "]"}]}],
+   RowBox[{"ipcon", "@", RowBox[{"Connect", "[", RowBox[{"host", ",", "port"}], "]"}]}],
+   RowBox[{"
+"}],
+   RowBox[{"(*", "Set channels alternating high/low 10 times with 100 ms delay", "*)"}],
+   RowBox[{"For", "[", RowBox[{RowBox[{"i", "=", "0"}], ",", RowBox[{"i", "<", "10"}], ",", RowBox[{"i", "++"}], ",", RowBox[{"\[IndentingNewLine]", RowBox[{"Pause", "[", "0.1", "]"}], ";", "\[IndentingNewLine]", "ido4", "@", RowBox[{"SetValue", "[", RowBox[{"{", RowBox[{"True", ",", "False", ",", "False", ",", "False"}], "}"}], "]"}], ";", "\[IndentingNewLine]", RowBox[{"Pause", "[", "0.1", "]"}], ";", "\[IndentingNewLine]", "ido4", "@", RowBox[{"SetValue", "[", RowBox[{"{", RowBox[{"False", ",", "True", ",", "False", ",", "False"}], "}"}], "]"}], ";", "\[IndentingNewLine]", RowBox[{"Pause", "[", "0.1", "]"}], ";", "\[IndentingNewLine]", "ido4", "@", RowBox[{"SetValue", "[", RowBox[{"{", RowBox[{"False", ",", "False", ",", "True", ",", "False"}], "}"}], "]"}], ";", "\[IndentingNewLine]", RowBox[{"Pause", "[", "0.1", "]"}], ";", "\[IndentingNewLine]", "ido4", "@", RowBox[{"SetValue", "[", RowBox[{"{", RowBox[{"False", ",", "False", ",", "False", ",", "True"}], "}"}], "]"}], "\[IndentingNewLine]"}]}], "]"}],
+   RowBox[{"
+"}],
+   RowBox[{"(*", "Clean up", "*)"}],
+   RowBox[{"ipcon", "@", RowBox[{"Disconnect", "[", "]"}]}],
+   RowBox[{"ReleaseNETObject", "[", "ido4", "]"}],
+   RowBox[{"ReleaseNETObject", "[", "ipcon", "]"}]
+  }], "Input"
+ ]
+}]
