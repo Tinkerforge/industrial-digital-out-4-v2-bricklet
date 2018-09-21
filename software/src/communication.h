@@ -118,13 +118,13 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
-	uint8_t led;
+	uint8_t channel;
 	uint8_t config;
 } __attribute__((__packed__)) SetChannelLEDConfig;
 
 typedef struct {
 	TFPMessageHeader header;
-	uint8_t led;
+	uint8_t channel;
 } __attribute__((__packed__)) GetChannelLEDConfig;
 
 typedef struct {

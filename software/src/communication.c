@@ -149,11 +149,11 @@ BootloaderHandleMessageResponse get_monoflop(const GetMonoflop *data, GetMonoflo
 }
 
 BootloaderHandleMessageResponse set_channel_led_config(const SetChannelLEDConfig *data) {
-	if(data->led > NUMBER_OF_CHANNELS - 1) {
+	if(data->channel > NUMBER_OF_CHANNELS - 1) {
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
 
-	ido4.channels[data->led].status_led.config = data->config;
+	ido4.channels[data->channel].status_led.config = data->config;
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
@@ -161,11 +161,11 @@ BootloaderHandleMessageResponse set_channel_led_config(const SetChannelLEDConfig
 BootloaderHandleMessageResponse get_channel_led_config(const GetChannelLEDConfig *data, GetChannelLEDConfig_Response *response) {
 	response->header.length = sizeof(GetChannelLEDConfig_Response);
 
-	if(data->led > NUMBER_OF_CHANNELS - 1) {
+	if(data->channel > NUMBER_OF_CHANNELS - 1) {
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
 
-	response->config = ido4.channels[data->led].status_led.config;
+	response->config = ido4.channels[data->channel].status_led.config;
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
