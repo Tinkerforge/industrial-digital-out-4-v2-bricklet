@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                                           // Don't use device before ipcon is connected.
 
     // Set channels alternating high/low 10 times with 100 ms delay
-    for i in 0..10 {
+    for _i in 0..10 {
         thread::sleep(Duration::from_millis(100));
         ido4.set_value([true, false, false, false]);
         thread::sleep(Duration::from_millis(100));
