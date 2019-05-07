@@ -47,6 +47,11 @@ BootloaderHandleMessageResponse set_value(const SetValue *data) {
 	logd("[+] IDO4-V2: set_value()\n\r");
 
 	for(uint8_t i = 0; i < NUMBER_OF_CHANNELS; i++) {
+		// abort potentially pending monoflop
+		ido4.channels[i].monoflop.time_start = 0;
+		ido4.channels[i].monoflop.time_remaining = 0;
+		ido4.channels[i].monoflop.running = false;
+
 		if(data->value & (1 << i)) {
 			ido4.channels[i].value = true;
 			XMC_GPIO_SetOutputLow(ido4.channels[i].port, ido4.channels[i].pin);
@@ -90,6 +95,11 @@ BootloaderHandleMessageResponse set_selected_value(const SetSelectedValue *data)
 	// Reset PWM
 	ido4_pwm_stop(data->channel);
 
+	// abort potentially pending monoflop
+	ido4.channels[data->channel].monoflop.time_start = 0;
+	ido4.channels[data->channel].monoflop.time_remaining = 0;
+	ido4.channels[data->channel].monoflop.running = false;
+
 	ido4.channels[data->channel].value = data->value;
 
 	if(ido4.channels[data->channel].value) {
@@ -117,6 +127,7 @@ BootloaderHandleMessageResponse set_monoflop(const SetMonoflop *data) {
 	ido4.channels[data->channel].value = data->value;
 	ido4.channels[data->channel].monoflop.time = data->time;
 	ido4.channels[data->channel].monoflop.time_remaining = data->time;
+	ido4.channels[data->channel].monoflop.running = true;
 
 	if(ido4.channels[data->channel].value) {
 		XMC_GPIO_SetOutputLow(ido4.channels[data->channel].port,
@@ -176,9 +187,9 @@ BootloaderHandleMessageResponse set_pwm_configuration(const SetPWMConfiguration 
 	}
 
 	// Reset monoflop
-	ido4.channels[data->channel].monoflop.time = 0;
 	ido4.channels[data->channel].monoflop.time_start = 0;
 	ido4.channels[data->channel].monoflop.time_remaining = 0;
+	ido4.channels[data->channel].monoflop.running = false;
 
 	ido4_pwm_update(data->channel, data->frequency, data->duty_cycle);
 
