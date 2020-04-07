@@ -15,13 +15,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Set channels alternating high/low 10 times with 100 ms delay
     for _i in 0..10 {
         thread::sleep(Duration::from_millis(100));
-        ido4.set_value([true, false, false, false]);
+        ido4.set_value([true, false, false, false]).recv()?;
         thread::sleep(Duration::from_millis(100));
-        ido4.set_value([false, true, false, false]);
+        ido4.set_value([false, true, false, false]).recv()?;
         thread::sleep(Duration::from_millis(100));
-        ido4.set_value([false, false, true, false]);
+        ido4.set_value([false, false, true, false]).recv()?;
         thread::sleep(Duration::from_millis(100));
-        ido4.set_value([false, false, false, true]);
+        ido4.set_value([false, false, false, true]).recv()?;
     }
 
     println!("Press enter to exit.");
