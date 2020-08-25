@@ -1,14 +1,9 @@
-
-
 #include "bindings/hal_common.h"
 #include "bindings/bricklet_industrial_digital_out_4_v2.h"
 
 #define UID "XYZ" // Change XYZ to the UID of your Industrial Digital Out 4 Bricklet 2.0
 
 void check(int rc, const char* msg);
-
-
-
 
 TF_IndustrialDigitalOut4V2 ido4;
 
