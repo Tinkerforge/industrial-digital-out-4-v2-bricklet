@@ -11,7 +11,6 @@ void example_setup(TF_HalContext *hal) {
 	// Create device object
 	check(tf_industrial_digital_out_4_v2_create(&ido4, UID, hal), "create device object");
 
-
 	// Set channels alternating high/low 10 times with 100 ms delay
 	int i;
 	for(i = 0; i < 10; ++i) {
@@ -28,7 +27,6 @@ void example_setup(TF_HalContext *hal) {
 		bool value_3[4] = {false, false, false, true};
 		check(tf_industrial_digital_out_4_v2_set_value(&ido4, value_3), "call set_value");
 	}
-
 }
 
 void example_loop(TF_HalContext *hal) {
