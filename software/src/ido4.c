@@ -1,6 +1,6 @@
 /* industrial-digital-out-4-v2-bricklet
  * Copyright (C) 2018 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
- * Copyright (C) 2018 Olaf Lüke <olaf@tinkerforge.com>
+ * Copyright (C) 2018-2020 Olaf Lüke <olaf@tinkerforge.com>
  *
  * ido4.h: Implementation of Industrial Digital Out 4 V2 Bricklet
  *
@@ -29,17 +29,46 @@
 #include "bricklib2/hal/system_timer/system_timer.h"
 #include "bricklib2/utility/util_definitions.h"
 
+#include "configs/config_ido4.h"
 #include "communication.h"
 
 #include "xmc_ccu4.h"
 
 IDO4_t ido4;
 
-XMC_CCU4_SLICE_t *const ido4_slice[NUMBER_OF_CHANNELS] = {
+XMC_CCU4_SLICE_t *const ido4_slice[IDO4_CHANNEL_NUM] = {
 	CCU40_CC43,
 	CCU40_CC42,
 	CCU40_CC41,
 	CCU40_CC40,
+};
+
+const uint8_t ido4_channel_pin[IDO4_CHANNEL_NUM] = {
+	IDO4_CHANNEL_0_PIN,
+	IDO4_CHANNEL_1_PIN,
+	IDO4_CHANNEL_2_PIN,
+	IDO4_CHANNEL_3_PIN,
+};
+
+XMC_GPIO_PORT_t *const ido4_channel_port[IDO4_CHANNEL_NUM] = {
+	IDO4_CHANNEL_0_PORT,
+	IDO4_CHANNEL_1_PORT,
+	IDO4_CHANNEL_2_PORT,
+	IDO4_CHANNEL_3_PORT,
+};
+
+const uint8_t ido4_channel_led_pin[IDO4_CHANNEL_NUM] = {
+	IDO4_CHANNEL_LED_0_PIN,
+	IDO4_CHANNEL_LED_1_PIN,
+	IDO4_CHANNEL_LED_2_PIN,
+	IDO4_CHANNEL_LED_3_PIN
+};
+
+XMC_GPIO_PORT_t *const ido4_channel_led_port[IDO4_CHANNEL_NUM] = {
+	IDO4_CHANNEL_LED_0_PORT,
+	IDO4_CHANNEL_LED_1_PORT,
+	IDO4_CHANNEL_LED_2_PORT,
+	IDO4_CHANNEL_LED_3_PORT,
 };
 
 void ido4_pwm_stop(const uint8_t channel) {
@@ -54,7 +83,7 @@ void ido4_pwm_stop(const uint8_t channel) {
 			.output_level        = XMC_GPIO_OUTPUT_LEVEL_LOW,
 		};
 
-		XMC_GPIO_Init(ido4.channels[channel].port, ido4.channels[channel].pin, &pwm_stop_config);
+		XMC_GPIO_Init(ido4_channel_port[channel], ido4_channel_pin[channel], &pwm_stop_config);
 	}
 }
 
@@ -88,12 +117,12 @@ void ido4_pwm_init(const uint8_t channel) {
 	XMC_CCU4_SLICE_SetTimerPeriodMatch(ido4_slice[channel], 32000);
 	XMC_CCU4_SLICE_SetTimerCompareMatch(ido4_slice[channel], 0);
 
-	XMC_CCU4_EnableShadowTransfer(CCU40, (XMC_CCU4_SHADOW_TRANSFER_SLICE_0 << (ido4.channels[channel].pin*4)) |
-	                                     (XMC_CCU4_SHADOW_TRANSFER_PRESCALER_SLICE_0 << (ido4.channels[channel].pin*4)));
+	XMC_CCU4_EnableShadowTransfer(CCU40, (XMC_CCU4_SHADOW_TRANSFER_SLICE_0 << (ido4_channel_pin[channel]*4)) |
+	                                     (XMC_CCU4_SHADOW_TRANSFER_PRESCALER_SLICE_0 << (ido4_channel_pin[channel]*4)));
 
-	XMC_GPIO_Init(ido4.channels[channel].port, ido4.channels[channel].pin, &pwm_config);
+	XMC_GPIO_Init(ido4_channel_port[channel], ido4_channel_pin[channel], &pwm_config);
 
-	XMC_CCU4_EnableClock(CCU40, ido4.channels[channel].pin);
+	XMC_CCU4_EnableClock(CCU40, ido4_channel_pin[channel]);
 }
 
 void ido4_pwm_update(const uint8_t channel, const uint32_t frequency, const uint16_t duty_cycle) {
@@ -125,8 +154,8 @@ void ido4_pwm_update(const uint8_t channel, const uint32_t frequency, const uint
 	XMC_CCU4_SLICE_SetPrescaler(ido4_slice[channel], prescaler);
 	XMC_CCU4_SLICE_SetTimerPeriodMatch(ido4_slice[channel], period_value);
 	XMC_CCU4_SLICE_SetTimerCompareMatch(ido4_slice[channel], compare_value);
-	XMC_CCU4_EnableShadowTransfer(CCU40, (XMC_CCU4_SHADOW_TRANSFER_SLICE_0 << (ido4.channels[channel].pin*4)) |
-    		                             (XMC_CCU4_SHADOW_TRANSFER_PRESCALER_SLICE_0 << (ido4.channels[channel].pin*4)));
+	XMC_CCU4_EnableShadowTransfer(CCU40, (XMC_CCU4_SHADOW_TRANSFER_SLICE_0 << (ido4_channel_pin[channel]*4)) |
+    		                             (XMC_CCU4_SHADOW_TRANSFER_PRESCALER_SLICE_0 << (ido4_channel_pin[channel]*4)));
 
 	if(new_start) {
     	XMC_CCU4_SLICE_StartTimer(ido4_slice[channel]);
@@ -143,14 +172,12 @@ void ido4_init(void) {
 	};
 
 	// Initialise all the channels
-	for(uint8_t i = 0; i < NUMBER_OF_CHANNELS; i++) {
+	for(uint8_t i = 0; i < IDO4_CHANNEL_NUM; i++) {
 		// Generic channel config
-		ido4.channels[i].pin = 3-i;
-		ido4.channels[i].port = (XMC_GPIO_PORT_t *)PORT1_BASE;
 		ido4.channels[i].value = false;
 
-		XMC_GPIO_Init(ido4.channels[i].port, ido4.channels[i].pin, &ch_pin_out_config);
-		XMC_GPIO_SetOutputHigh(ido4.channels[i].port, ido4.channels[i].pin);
+		XMC_GPIO_Init(ido4_channel_port[i], ido4_channel_pin[i], &ch_pin_out_config);
+		XMC_GPIO_SetOutputHigh(ido4_channel_port[i], ido4_channel_pin[i]);
 
 		// Channel monoflop config
 		ido4.channels[i].monoflop.time = 0;
@@ -158,28 +185,10 @@ void ido4_init(void) {
 		ido4.channels[i].monoflop.time_remaining = 0;
 		ido4.channels[i].monoflop.running = false;
 
-		// Channel LED config
-		ido4.channels[i].status_led.port = (XMC_GPIO_PORT_t *)PORT0_BASE;
-
-		if(i == 0) {
-			ido4.channels[i].status_led.pin = 12;
-		}
-		else if(i == 1) {
-			ido4.channels[i].status_led.pin = 9;
-		}
-		else if(i == 2) {
-			ido4.channels[i].status_led.pin = 8;
-		}
-		else if(i == 3) {
-			ido4.channels[i].status_led.pin = 7;
-		}
-
-		XMC_GPIO_Init(ido4.channels[i].status_led.port, ido4.channels[i].status_led.pin, &ch_pin_out_config);
+		XMC_GPIO_Init(ido4_channel_led_port[i], ido4_channel_led_pin[i], &ch_pin_out_config);
 	
-		ido4.channels[i].status_led.config = \
-			(uint8_t)INDUSTRIAL_DIGITAL_OUT_4_V2_CHANNEL_LED_CONFIG_SHOW_CHANNEL_STATUS;
-		ido4.channels[i].status_led.channel_led_flicker_state.config = \
-			(uint8_t)LED_FLICKER_CONFIG_OFF;
+		ido4.channels[i].status_led.config = INDUSTRIAL_DIGITAL_OUT_4_V2_CHANNEL_LED_CONFIG_SHOW_CHANNEL_STATUS;
+		ido4.channels[i].status_led.channel_led_flicker_state.config = LED_FLICKER_CONFIG_OFF;
 	}
 
 	// Monopflop callback ringbuffer init
@@ -190,7 +199,7 @@ void ido4_init(void) {
 
 void ido4_tick(void) {
 	// Iterate all channels
-	for(uint8_t i = 0; i < NUMBER_OF_CHANNELS; i++) {
+	for(uint8_t i = 0; i < IDO4_CHANNEL_NUM; i++) {
 		// Manage monoflop
 		if(ido4.channels[i].monoflop.running) {
 			if(system_timer_is_time_elapsed_ms(ido4.channels[i].monoflop.time_start,
@@ -203,10 +212,10 @@ void ido4_tick(void) {
 				ido4.channels[i].value = !ido4.channels[i].value;
 
 				if(ido4.channels[i].value) {
-					XMC_GPIO_SetOutputLow(ido4.channels[i].port, ido4.channels[i].pin);
+					XMC_GPIO_SetOutputLow(ido4_channel_port[i], ido4_channel_pin[i]);
 				}
 				else {
-					XMC_GPIO_SetOutputHigh(ido4.channels[i].port, ido4.channels[i].pin);
+					XMC_GPIO_SetOutputHigh(ido4_channel_port[i], ido4_channel_pin[i]);
 				}
 
 				// Enqueue monoflop callback for the channel
@@ -218,8 +227,7 @@ void ido4_tick(void) {
 				}
 			}
 			else {
-				ido4.channels[i].monoflop.time_remaining = \
-					ido4.channels[i].monoflop.time - (system_timer_get_ms() - ido4.channels[i].monoflop.time_start);
+				ido4.channels[i].monoflop.time_remaining = ido4.channels[i].monoflop.time - (system_timer_get_ms() - ido4.channels[i].monoflop.time_start);
 			}
 		}
 
@@ -227,36 +235,31 @@ void ido4_tick(void) {
 		switch (ido4.channels[i].status_led.config) {
 			case INDUSTRIAL_DIGITAL_OUT_4_V2_CHANNEL_LED_CONFIG_OFF:
 				ido4.channels[i].status_led.channel_led_flicker_state.config = LED_FLICKER_CONFIG_OFF;
-				XMC_GPIO_SetOutputHigh(ido4.channels[i].status_led.port, ido4.channels[i].status_led.pin);
+				XMC_GPIO_SetOutputHigh(ido4_channel_led_port[i], ido4_channel_led_pin[i]);
 
 				break;
 
 			case INDUSTRIAL_DIGITAL_OUT_4_V2_CHANNEL_LED_CONFIG_ON:
 				ido4.channels[i].status_led.channel_led_flicker_state.config = LED_FLICKER_CONFIG_ON;
-				XMC_GPIO_SetOutputLow(ido4.channels[i].status_led.port, ido4.channels[i].status_led.pin);
+				XMC_GPIO_SetOutputLow(ido4_channel_led_port[i], ido4_channel_led_pin[i]);
 
 				break;
 
 			case INDUSTRIAL_DIGITAL_OUT_4_V2_CHANNEL_LED_CONFIG_SHOW_HEARTBEAT:
 				ido4.channels[i].status_led.channel_led_flicker_state.config = LED_FLICKER_CONFIG_HEARTBEAT;
 
-				led_flicker_tick(&ido4.channels[i].status_led.channel_led_flicker_state,
-				                 system_timer_get_ms(),
-				                 ido4.channels[i].status_led.port,
-				                 ido4.channels[i].status_led.pin);
+				led_flicker_tick(&ido4.channels[i].status_led.channel_led_flicker_state, system_timer_get_ms(), ido4_channel_led_port[i], ido4_channel_led_pin[i]);
 
 				break;
 
 			case INDUSTRIAL_DIGITAL_OUT_4_V2_CHANNEL_LED_CONFIG_SHOW_CHANNEL_STATUS:
 				ido4.channels[i].status_led.channel_led_flicker_state.config = LED_FLICKER_CONFIG_OFF;
 
-				if(XMC_GPIO_GetInput(ido4.channels[i].port, ido4.channels[i].pin)) {
-					XMC_GPIO_SetOutputHigh(ido4.channels[i].status_led.port,
-					                       ido4.channels[i].status_led.pin);
+				if(XMC_GPIO_GetInput(ido4_channel_led_port[i], ido4_channel_led_pin[i])) {
+					XMC_GPIO_SetOutputHigh(ido4_channel_led_port[i], ido4_channel_led_pin[i]);
 				}
 				else {
-					XMC_GPIO_SetOutputLow(ido4.channels[i].status_led.port,
-					                      ido4.channels[i].status_led.pin);
+					XMC_GPIO_SetOutputLow(ido4_channel_led_port[i], ido4_channel_led_pin[i]);
 				}
 
 				break;

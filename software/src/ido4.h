@@ -1,6 +1,6 @@
 /* industrial-digital-out-4-v2-bricklet
  * Copyright (C) 2018 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
- * Copyright (C) 2018 Olaf Lüke <olaf@tinkerforge.com>
+ * Copyright (C) 2018-2020 Olaf Lüke <olaf@tinkerforge.com>
  *
  * ido4.h: Implementation of Industrial Digital Out 4 V2 Bricklet
  *
@@ -31,15 +31,13 @@
 
 #include "xmc_gpio.h"
 
-#define NUMBER_OF_CHANNELS 4
+#define IDO4_CHANNEL_NUM 4
 
 #define MONOFLOP_CB_BUFFER_UNIT_SIZE 2
 #define MONOFLOP_CB_BUFFER_SIZE (64 * MONOFLOP_CB_BUFFER_UNIT_SIZE)
 
 typedef struct {
-	uint8_t pin;
 	uint8_t config;
-	XMC_GPIO_PORT_t *port;
 	LEDFlickerState channel_led_flicker_state;
 } CH_STATUS_LED_CONFIG_t;
 
@@ -58,8 +56,6 @@ typedef struct {
 typedef struct {
 	// Generic channel config
 	bool value;
-	uint8_t pin;
-	XMC_GPIO_PORT_t *port;
 
 	// Channel monoflop config
 	CH_MONOFLOP_t monoflop;
@@ -72,7 +68,7 @@ typedef struct {
 } CH_t;
 
 typedef struct {
-	CH_t channels[NUMBER_OF_CHANNELS];
+	CH_t channels[IDO4_CHANNEL_NUM];
 
 	// Monoflop callback
 	Ringbuffer monoflop_cb_rb;

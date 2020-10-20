@@ -1,6 +1,6 @@
 /* industrial-digital-out-4-v2-bricklet
  * Copyright (C) 2018 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
- * Copyright (C) 2018 Olaf Lüke <olaf@tinkerforge.com>
+ * Copyright (C) 2018-2020 Olaf Lüke <olaf@tinkerforge.com>
  *
  * communication.c: TFP protocol message handling
  *
@@ -28,6 +28,9 @@
 
 #include "ido4.h"
 
+extern const uint8_t ido4_channel_pin[];
+extern XMC_GPIO_PORT_t *const ido4_channel_port[];
+
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
 	switch(tfp_get_fid_from_message(message)) {
 		case FID_SET_VALUE: return set_value(message);
@@ -46,7 +49,7 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 BootloaderHandleMessageResponse set_value(const SetValue *data) {
 	logd("[+] IDO4-V2: set_value()\n\r");
 
-	for(uint8_t i = 0; i < NUMBER_OF_CHANNELS; i++) {
+	for(uint8_t i = 0; i < IDO4_CHANNEL_NUM; i++) {
 		// abort potentially pending monoflop
 		ido4.channels[i].monoflop.time_start = 0;
 		ido4.channels[i].monoflop.time_remaining = 0;
@@ -54,11 +57,11 @@ BootloaderHandleMessageResponse set_value(const SetValue *data) {
 
 		if(data->value & (1 << i)) {
 			ido4.channels[i].value = true;
-			XMC_GPIO_SetOutputLow(ido4.channels[i].port, ido4.channels[i].pin);
+			XMC_GPIO_SetOutputLow(ido4_channel_port[i], ido4_channel_pin[i]);
 		}
 		else {
 			ido4.channels[i].value = false;
-			XMC_GPIO_SetOutputHigh(ido4.channels[i].port, ido4.channels[i].pin);
+			XMC_GPIO_SetOutputHigh(ido4_channel_port[i], ido4_channel_pin[i]);
 		}
 	}
 
@@ -71,7 +74,7 @@ BootloaderHandleMessageResponse get_value(const GetValue *data, GetValue_Respons
 	uint8_t bit_encoded_values = 0;
 	response->header.length = sizeof(GetValue_Response);
 
-	for(uint8_t i = 0; i < NUMBER_OF_CHANNELS; i++) {
+	for(uint8_t i = 0; i < IDO4_CHANNEL_NUM; i++) {
 		if(ido4.channels[i].value) {
 			bit_encoded_values |= (1 << i);
 		}
@@ -88,7 +91,7 @@ BootloaderHandleMessageResponse get_value(const GetValue *data, GetValue_Respons
 BootloaderHandleMessageResponse set_selected_value(const SetSelectedValue *data) {
 	logd("[+] IDO4-V2: set_selected_value()\n\r");
 
-	if(data->channel > NUMBER_OF_CHANNELS - 1) {
+	if(data->channel > IDO4_CHANNEL_NUM - 1) {
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
 
@@ -103,12 +106,10 @@ BootloaderHandleMessageResponse set_selected_value(const SetSelectedValue *data)
 	ido4.channels[data->channel].value = data->value;
 
 	if(ido4.channels[data->channel].value) {
-		XMC_GPIO_SetOutputLow(ido4.channels[data->channel].port,
-		                      ido4.channels[data->channel].pin);
+		XMC_GPIO_SetOutputLow(ido4_channel_port[data->channel], ido4_channel_pin[data->channel]);
 	}
 	else {
-		XMC_GPIO_SetOutputHigh(ido4.channels[data->channel].port,
-		                       ido4.channels[data->channel].pin);
+		XMC_GPIO_SetOutputHigh(ido4_channel_port[data->channel], ido4_channel_pin[data->channel]);
 	}
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
@@ -117,7 +118,7 @@ BootloaderHandleMessageResponse set_selected_value(const SetSelectedValue *data)
 BootloaderHandleMessageResponse set_monoflop(const SetMonoflop *data) {
 	logd("[+] IDO4-V2: set_monoflop()\n\r");
 
-	if(data->channel > NUMBER_OF_CHANNELS - 1) {
+	if(data->channel > IDO4_CHANNEL_NUM - 1) {
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
 
@@ -130,12 +131,10 @@ BootloaderHandleMessageResponse set_monoflop(const SetMonoflop *data) {
 	ido4.channels[data->channel].monoflop.running = true;
 
 	if(ido4.channels[data->channel].value) {
-		XMC_GPIO_SetOutputLow(ido4.channels[data->channel].port,
-		                      ido4.channels[data->channel].pin);
+		XMC_GPIO_SetOutputLow(ido4_channel_port[data->channel], ido4_channel_pin[data->channel]);
 	}
 	else {
-		XMC_GPIO_SetOutputHigh(ido4.channels[data->channel].port,
-		                       ido4.channels[data->channel].pin);
+		XMC_GPIO_SetOutputHigh(ido4_channel_port[data->channel], ido4_channel_pin[data->channel]);
 	}
 
 	ido4.channels[data->channel].monoflop.time_start = system_timer_get_ms();
@@ -148,7 +147,7 @@ BootloaderHandleMessageResponse get_monoflop(const GetMonoflop *data, GetMonoflo
 
 	response->header.length = sizeof(GetMonoflop_Response);
 
-	if(data->channel > NUMBER_OF_CHANNELS - 1) {
+	if(data->channel > IDO4_CHANNEL_NUM - 1) {
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
 
@@ -160,7 +159,7 @@ BootloaderHandleMessageResponse get_monoflop(const GetMonoflop *data, GetMonoflo
 }
 
 BootloaderHandleMessageResponse set_channel_led_config(const SetChannelLEDConfig *data) {
-	if(data->channel > NUMBER_OF_CHANNELS - 1) {
+	if(data->channel > IDO4_CHANNEL_NUM - 1) {
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
 
@@ -172,7 +171,7 @@ BootloaderHandleMessageResponse set_channel_led_config(const SetChannelLEDConfig
 BootloaderHandleMessageResponse get_channel_led_config(const GetChannelLEDConfig *data, GetChannelLEDConfig_Response *response) {
 	response->header.length = sizeof(GetChannelLEDConfig_Response);
 
-	if(data->channel > NUMBER_OF_CHANNELS - 1) {
+	if(data->channel > IDO4_CHANNEL_NUM - 1) {
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
 
@@ -182,7 +181,7 @@ BootloaderHandleMessageResponse get_channel_led_config(const GetChannelLEDConfig
 }
 
 BootloaderHandleMessageResponse set_pwm_configuration(const SetPWMConfiguration *data) {
-	if(data->channel >= NUMBER_OF_CHANNELS) {
+	if(data->channel >= IDO4_CHANNEL_NUM) {
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
 
@@ -197,7 +196,7 @@ BootloaderHandleMessageResponse set_pwm_configuration(const SetPWMConfiguration 
 }
 
 BootloaderHandleMessageResponse get_pwm_configuration(const GetPWMConfiguration *data, GetPWMConfiguration_Response *response) {
-	if(data->channel >= NUMBER_OF_CHANNELS) {
+	if(data->channel >= IDO4_CHANNEL_NUM) {
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
 
