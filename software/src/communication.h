@@ -1,6 +1,5 @@
 /* industrial-digital-out-4-v2-bricklet
- * Copyright (C) 2018 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
- * Copyright (C) 2018 Olaf Lüke <olaf@tinkerforge.com>
+ * Copyright (C) 2020 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
  *
  * communication.h: TFP protocol message handling
  *
@@ -35,10 +34,14 @@ void communication_tick(void);
 void communication_init(void);
 
 // Constants
+
 #define INDUSTRIAL_DIGITAL_OUT_4_V2_CHANNEL_LED_CONFIG_OFF 0
 #define INDUSTRIAL_DIGITAL_OUT_4_V2_CHANNEL_LED_CONFIG_ON 1
 #define INDUSTRIAL_DIGITAL_OUT_4_V2_CHANNEL_LED_CONFIG_SHOW_HEARTBEAT 2
 #define INDUSTRIAL_DIGITAL_OUT_4_V2_CHANNEL_LED_CONFIG_SHOW_CHANNEL_STATUS 3
+
+#define INDUSTRIAL_DIGITAL_OUT_4_V2_WIEGAND_STATE_IDLE 0
+#define INDUSTRIAL_DIGITAL_OUT_4_V2_WIEGAND_STATE_BUSY 1
 
 #define INDUSTRIAL_DIGITAL_OUT_4_V2_BOOTLOADER_MODE_BOOTLOADER 0
 #define INDUSTRIAL_DIGITAL_OUT_4_V2_BOOTLOADER_MODE_FIRMWARE 1
@@ -68,8 +71,11 @@ void communication_init(void);
 #define FID_GET_CHANNEL_LED_CONFIG 8
 #define FID_SET_PWM_CONFIGURATION 9
 #define FID_GET_PWM_CONFIGURATION 10
+#define FID_WRITE_WIEGAND_DATA_LOW_LEVEL 11
+#define FID_GET_WIEGAND_STATE 12
 
 #define FID_CALLBACK_MONOFLOP_DONE 6
+#define FID_CALLBACK_WIEGAND_DONE 13
 
 typedef struct {
 	TFPMessageHeader header;
@@ -150,6 +156,26 @@ typedef struct {
 	uint16_t duty_cycle;
 } __attribute__((__packed__)) GetPWMConfiguration_Response;
 
+typedef struct {
+	TFPMessageHeader header;
+	uint16_t data_length;
+	uint8_t data_data[32];
+} __attribute__((__packed__)) WriteWiegandDataLowLevel;
+
+typedef struct {
+	TFPMessageHeader header;
+} __attribute__((__packed__)) GetWiegandState;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t wiegand_state;
+} __attribute__((__packed__)) GetWiegandState_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+} __attribute__((__packed__)) WiegandDone_Callback;
+
+
 // Function prototypes
 BootloaderHandleMessageResponse set_value(const SetValue *data);
 BootloaderHandleMessageResponse get_value(const GetValue *data, GetValue_Response *response);
@@ -160,13 +186,18 @@ BootloaderHandleMessageResponse set_channel_led_config(const SetChannelLEDConfig
 BootloaderHandleMessageResponse get_channel_led_config(const GetChannelLEDConfig *data, GetChannelLEDConfig_Response *response);
 BootloaderHandleMessageResponse set_pwm_configuration(const SetPWMConfiguration *data);
 BootloaderHandleMessageResponse get_pwm_configuration(const GetPWMConfiguration *data, GetPWMConfiguration_Response *response);
+BootloaderHandleMessageResponse write_wiegand_data_low_level(const WriteWiegandDataLowLevel *data);
+BootloaderHandleMessageResponse get_wiegand_state(const GetWiegandState *data, GetWiegandState_Response *response);
 
 // Callbacks
 bool handle_monoflop_done_callback(void);
+bool handle_wiegand_done_callback(void);
 
 #define COMMUNICATION_CALLBACK_TICK_WAIT_MS 1
-#define COMMUNICATION_CALLBACK_HANDLER_NUM 1
+#define COMMUNICATION_CALLBACK_HANDLER_NUM 2
 #define COMMUNICATION_CALLBACK_LIST_INIT \
 	handle_monoflop_done_callback, \
+	handle_wiegand_done_callback, \
+
 
 #endif

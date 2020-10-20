@@ -30,6 +30,7 @@
 #include "bricklib2/utility/led_flicker.h"
 
 #include "xmc_gpio.h"
+#include "xmc_ccu4.h"
 
 #define IDO4_CHANNEL_NUM 4
 
@@ -79,6 +80,7 @@ extern IDO4_t ido4;
 
 void ido4_pwm_stop(const uint8_t channel);
 void ido4_pwm_update(const uint8_t channel, const uint32_t frequency, const uint16_t duty_cycle);
+void ido4_pwm_init(const uint8_t channel, const XMC_CCU4_SLICE_TIMER_REPEAT_MODE_t monoshot);
 void ido4_init(void);
 void ido4_tick(void);
 

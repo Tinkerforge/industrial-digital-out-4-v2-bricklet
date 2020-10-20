@@ -87,10 +87,10 @@ void ido4_pwm_stop(const uint8_t channel) {
 	}
 }
 
-void ido4_pwm_init(const uint8_t channel) {
+void ido4_pwm_init(const uint8_t channel, const XMC_CCU4_SLICE_TIMER_REPEAT_MODE_t monoshot) {
 	const XMC_CCU4_SLICE_COMPARE_CONFIG_t compare_config = {
 		.timer_mode          = XMC_CCU4_SLICE_TIMER_COUNT_MODE_EA,
-		.monoshot            = false,
+		.monoshot            = monoshot,
 		.shadow_xfer_clear   = 0,
 		.dither_timer_period = 0,
 		.dither_duty_cycle   = 0,
@@ -134,7 +134,7 @@ void ido4_pwm_update(const uint8_t channel, const uint32_t frequency, const uint
 	const bool new_start = ido4.channels[channel].pwm.frequency == 0;
 
 	if(new_start) {
-		ido4_pwm_init(channel);
+		ido4_pwm_init(channel, XMC_CCU4_SLICE_TIMER_REPEAT_MODE_REPEAT);
 	}
 
 	ido4.channels[channel].pwm.duty_cycle = MIN(10000, duty_cycle);
@@ -255,7 +255,7 @@ void ido4_tick(void) {
 			case INDUSTRIAL_DIGITAL_OUT_4_V2_CHANNEL_LED_CONFIG_SHOW_CHANNEL_STATUS:
 				ido4.channels[i].status_led.channel_led_flicker_state.config = LED_FLICKER_CONFIG_OFF;
 
-				if(XMC_GPIO_GetInput(ido4_channel_led_port[i], ido4_channel_led_pin[i])) {
+				if(XMC_GPIO_GetInput(ido4_channel_port[i], ido4_channel_pin[i])) {
 					XMC_GPIO_SetOutputHigh(ido4_channel_led_port[i], ido4_channel_led_pin[i]);
 				}
 				else {

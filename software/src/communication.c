@@ -27,6 +27,7 @@
 #include "bricklib2/logging/logging.h"
 
 #include "ido4.h"
+#include "wiegand.h"
 
 extern const uint8_t ido4_channel_pin[];
 extern XMC_GPIO_PORT_t *const ido4_channel_port[];
@@ -42,6 +43,8 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_GET_CHANNEL_LED_CONFIG: return get_channel_led_config(message, response);
 		case FID_SET_PWM_CONFIGURATION: return set_pwm_configuration(message);
 		case FID_GET_PWM_CONFIGURATION: return get_pwm_configuration(message, response);
+		case FID_WRITE_WIEGAND_DATA_LOW_LEVEL: return write_wiegand_data_low_level(message);
+		case FID_GET_WIEGAND_STATE: return get_wiegand_state(message, response);
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
 }
@@ -207,6 +210,39 @@ BootloaderHandleMessageResponse get_pwm_configuration(const GetPWMConfiguration 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
+BootloaderHandleMessageResponse write_wiegand_data_low_level(const WriteWiegandDataLowLevel *data) {
+	if(data->data_length > 256) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
+
+	// Reset monoflop for channel 0 and 1
+	ido4.channels[0].monoflop.time_start     = 0;
+	ido4.channels[1].monoflop.time_start     = 0;
+	ido4.channels[0].monoflop.time_remaining = 0;
+	ido4.channels[1].monoflop.time_start     = 0;
+	ido4.channels[0].monoflop.running        = false;
+	ido4.channels[1].monoflop.running        = false;
+
+	memcpy(wiegand.data, data->data_data, 32);
+	wiegand.data_length = data->data_length;
+	wiegand.data_index  = 0;
+	wiegand.last_time   = 0;
+
+	return HANDLE_MESSAGE_RESPONSE_EMPTY;
+}
+
+BootloaderHandleMessageResponse get_wiegand_state(const GetWiegandState *data, GetWiegandState_Response *response) {
+	response->header.length = sizeof(GetWiegandState_Response);
+	if(wiegand.data_length > 0) {
+		response->wiegand_state = INDUSTRIAL_DIGITAL_OUT_4_V2_WIEGAND_STATE_BUSY;
+	} else {
+		response->wiegand_state = INDUSTRIAL_DIGITAL_OUT_4_V2_WIEGAND_STATE_IDLE;
+	}
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+
 bool handle_monoflop_done_callback(void) {
 	static bool is_buffered = false;
 	static MonoflopDone_Callback cb;
@@ -236,6 +272,30 @@ bool handle_monoflop_done_callback(void) {
 		return true;
 	}
 	else {
+		is_buffered = true;
+	}
+
+	return false;
+}
+
+bool handle_wiegand_done_callback(void) {
+	static bool is_buffered = false;
+	static WiegandDone_Callback cb;
+
+	if(!is_buffered) {
+		if(!wiegand.done) {
+			return false;
+		}
+
+		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(WiegandDone_Callback), FID_CALLBACK_WIEGAND_DONE);
+		wiegand.done = false;
+	}
+
+	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {
+		bootloader_spitfp_send_ack_and_message(&bootloader_status, (uint8_t*)&cb, sizeof(WiegandDone_Callback));
+		is_buffered = false;
+		return true;
+	} else {
 		is_buffered = true;
 	}
 

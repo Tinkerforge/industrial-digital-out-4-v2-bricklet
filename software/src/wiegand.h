@@ -1,7 +1,7 @@
 /* industrial-digital-out-4-v2-bricklet
- * Copyright (C) 2018 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
+ * Copyright (C) 2020 Olaf Lüke <olaf@tinkerforge.com>
  *
- * main.c: Initialization for Industrial Digital Out 4 V2 Bricklet
+ * wiegand.h: Simple bit banging wiegand sender
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,31 +19,25 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include <stdio.h>
+#ifndef WIEGAND_H
+#define WIEGAND_H
+
+#include <stdint.h>
 #include <stdbool.h>
 
-#include "configs/config.h"
+typedef struct {
+	uint16_t data_length;
+	uint8_t data[32];
 
-#include "bricklib2/bootloader/bootloader.h"
-#include "bricklib2/hal/system_timer/system_timer.h"
-#include "bricklib2/logging/logging.h"
-#include "communication.h"
+	uint16_t data_index;
+	uint32_t last_time;
 
-#include "ido4.h"
-#include "wiegand.h"
+	bool done;
+} Wiegand;
 
-int main(void) {
-	logging_init();
-	logd("Start Industrial Digital Out 4 V2 Bricklet\n\r");
+extern Wiegand wiegand;
 
-	communication_init();
-	ido4_init();
-	wiegand_init();
+void wiegand_tick(void);
+void wiegand_init(void);
 
-	while(true) {
-		bootloader_tick();
-		communication_tick();
-		ido4_tick();
-		wiegand_tick();
-	}
-}
+#endif
