@@ -10,15 +10,11 @@ from tinkerforge.bricklet_industrial_digital_out_4_v2 import BrickletIndustrialD
 
 import time
 
-def wiegand_string_to_bool_list(s):
-    l = []
-    for x in s:
-        l.append(x == '1')
-    
-    return l
+def wiegand_string_to_bool_list(string):
+    return [bit == '1' for bit in string]
 
 def cb_wiegand_done():
-    print('CB DONE!')
+    print('Done')
 
 if __name__ == "__main__":
     ipcon = IPConnection() # Create IP connection
@@ -27,17 +23,19 @@ if __name__ == "__main__":
     ipcon.connect(HOST, PORT) # Connect to brickd
     # Don't use device before ipcon is connected
 
-#    ido.write_wiegand_data(wiegand_string_to_bool_list('11010101110010010010101100'))
+    ido.register_callback(ido.CALLBACK_WIEGAND_DONE, cb_wiegand_done)
 
-    data = (True, True, False, True, False, True, False, True, True, True, False, False, True, False, False, True, False, False, True, False, True, False, True, True, False, False)
+    data = wiegand_string_to_bool_list('11010101110010010010101100')
 
     ido.write_wiegand_data(data)
-    ido.register_callback(ido.CALLBACK_WIEGAND_DONE, cb_wiegand_done)
+
     while True:
-        time.sleep(0.01)
+        time.sleep(0.02)
         state = ido.get_wiegand_state()
-        print('Wiegand State: {0}'.format(state))
-        if state == 0:
+
+        print('State {0}'.format(state))
+
+        if state == BrickletIndustrialDigitalOut4V2.WIEGAND_STATE_IDLE:
             break
 
     ipcon.disconnect()
